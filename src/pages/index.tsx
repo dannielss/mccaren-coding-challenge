@@ -1,114 +1,199 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { FileUploader } from "@/components";
+import { FilesData } from "@/lib/types";
+import { useState, useMemo, useEffect } from "react";
+import { VariableSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import debounce from "lodash.debounce";
+import { getHighlightedText } from "@/lib/utils";
+import { Switch } from "@/components/switch";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+interface FileWithLines extends FilesData {
+  lines: string[];
+  matches?: number;
+}
 
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [filesData, setFilesData] = useState<FileWithLines[]>([]);
+  const [keyword, setKeyword] = useState("");
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const storedTheme = localStorage.getItem("theme") as
+      | "light"
+      | "dark"
+      | null;
+    setTheme(storedTheme || "light");
+  }, []);
+
+  useEffect(() => {
+    console.log("theme", theme);
+    if (theme) {
+      const htmlElement = document.querySelector("html");
+      if (theme === "dark") {
+        htmlElement?.classList.add("dark");
+      } else {
+        htmlElement?.classList.remove("dark");
+      }
+      localStorage.setItem("theme", theme);
+    }
+  }, [theme]);
+
+  const toggleDarkMode = () => {
+    console.log("clicked");
+    if (theme) {
+      setTheme((theme) => (theme === "light" ? "dark" : "light"));
+      localStorage.setItem("theme", theme === "light" ? "light" : "dark");
+    }
+  };
+
+  const handleUpload = (uploadedFiles: FilesData[]) => {
+    const filesWithLines = uploadedFiles.map((file) => ({
+      ...file,
+      lines: file.text.split("\n").filter((line) => line.trim()),
+    }));
+    setFilesData((prev) => [...prev, ...filesWithLines]);
+  };
+
+  // Updated filtering to only filter at file level
+  const filteredFiles = useMemo(() => {
+    if (!keyword.trim()) return filesData;
+
+    return filesData
+      .map((file) => ({
+        ...file,
+        matches: file.lines.reduce(
+          (count, line) =>
+            count + (line.match(new RegExp(keyword, "gi")) || []).length,
+          0
+        ),
+      }))
+      .filter((file) => file.matches > 0)
+      .sort((a, b) => b.matches - a.matches);
+  }, [filesData, keyword]);
+
+  const debouncedSetKeyword = useMemo(() => debounce(setKeyword, 300), []);
+
+  const getFileCardSize = useMemo(
+    () => (index: number) => {
+      const file = filteredFiles[index];
+      if (!file) return 400;
+
+      const baseHeight = 80;
+      const contentHeight = Math.min(
+        400,
+        file.lines.reduce((total, line) => {
+          const lineLength = line.length;
+          const lineHeight = Math.ceil(lineLength / 80) * 24;
+          return total + lineHeight;
+        }, 0)
+      );
+
+      return baseHeight + contentHeight + 20;
+    },
+    [filteredFiles]
+  );
+
+  const getLineSize = useMemo(
+    () => (line: string) => {
+      const lineLength = line.length;
+      return Math.ceil(lineLength / 80) * 24;
+    },
+    []
+  );
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Mccaren coding challenge
+        </h1>
+        <div className="flex gap-2 items-center mb-2">
+          <Switch checked={theme === "dark"} onCheckedChange={toggleDarkMode} />
+          <label className="font-md font-medium dark:text-white">
+            Dark mode
+          </label>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      <FileUploader onUpload={handleUpload} />
+
+      <div className="space-y-2">
+        <input
+          type="text"
+          placeholder="Search in documents"
+          defaultValue={keyword}
+          onChange={(e) => debouncedSetKeyword(e.target.value)}
+          className="w-full px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2f2f2f] dark:text-white dark:placeholder:text-white"
+        />
+        {keyword.trim() && (
+          <div className="text-sm text-gray-600 dark:text-white">
+            Showing {filteredFiles.length} of {filesData.length} documents with
+            matches
+          </div>
+        )}
+      </div>
+
+      {keyword.trim() && filteredFiles.length === 0 && (
+        <div className="text-center py-8 text-gray-500 dark:text-white">
+          No documents match your search
+        </div>
+      )}
+
+      <div className="h-[600px] w-full flex">
+        <AutoSizer>
+          {({ height, width }) => (
+            <List
+              height={height}
+              itemCount={filteredFiles.length}
+              itemSize={getFileCardSize}
+              width={width}
+              className="scrollbar"
+            >
+              {({ index, style }) => {
+                const file = filteredFiles[index];
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      ...style,
+                    }}
+                    className="p-4 rounded-lg bg-white flex flex-col dark:bg-[#2f2f2f] shadow-lg "
+                  >
+                    <h3 className="font-medium text-gray-900 mb-4 dark:text-white">
+                      {file.name}
+                    </h3>
+                    <div className="flex-grow overflow-auto scrollbar p-2">
+                      <AutoSizer>
+                        {({ height, width }) => (
+                          <List
+                            height={height}
+                            itemCount={file.lines.length}
+                            itemSize={(index) => getLineSize(file.lines[index])}
+                            width={width}
+                            className="scrollbar"
+                          >
+                            {({ index: lineIndex, style }) => (
+                              <div
+                                style={style}
+                                className="text-sm text-gray-800 whitespace-pre-wrap break-words dark:text-white"
+                              >
+                                {getHighlightedText(
+                                  file.lines[lineIndex],
+                                  keyword
+                                )}
+                              </div>
+                            )}
+                          </List>
+                        )}
+                      </AutoSizer>
+                    </div>
+                  </div>
+                );
+              }}
+            </List>
+          )}
+        </AutoSizer>
+      </div>
     </div>
   );
 }
