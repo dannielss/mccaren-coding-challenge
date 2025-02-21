@@ -155,7 +155,7 @@ export default function Home() {
                     style={{
                       ...style,
                     }}
-                    className="p-4 border dark:border-none rounded-lg bg-white flex flex-col dark:bg-[#2f2f2f] shadow-lg "
+                    className={`p-4 border dark:border-none rounded-lg bg-white flex flex-col dark:bg-[#2f2f2f] shadow-lg max-h-[calc(100%-7rem)]`}
                   >
                     <h3 className="font-medium text-gray-900 mb-4 dark:text-white">
                       {file.name}
