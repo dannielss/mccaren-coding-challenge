@@ -108,11 +108,13 @@ export default function FileUploader({ onUpload }: FileUploaderProps) {
             </label>
           </>
         )}
-      </div>
 
-      {error && (
-        <div className="text-red-500 mt-2">Failed to process file: {error}</div>
-      )}
+        {error && (
+          <div className="text-red-500 mt-2">
+            Failed to process file: {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
