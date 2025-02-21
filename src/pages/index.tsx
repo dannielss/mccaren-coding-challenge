@@ -26,7 +26,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    console.log("theme", theme);
     if (theme) {
       const htmlElement = document.querySelector("html");
       if (theme === "dark") {
@@ -39,7 +38,6 @@ export default function Home() {
   }, [theme]);
 
   const toggleDarkMode = () => {
-    console.log("clicked");
     if (theme) {
       setTheme((theme) => (theme === "light" ? "dark" : "light"));
       localStorage.setItem("theme", theme === "light" ? "light" : "dark");

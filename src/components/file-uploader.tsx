@@ -68,7 +68,6 @@ export default function FileUploader({ onUpload }: FileUploaderProps) {
     handleFiles(event.target.files);
   };
 
-  console.log(dragging);
   return (
     <div className="border-2 border-dashed border-gray-300 rounded-lg text-center ">
       <div
