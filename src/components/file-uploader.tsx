@@ -82,7 +82,7 @@ export default function FileUploader({ onUpload }: FileUploaderProps) {
         onDrop={handleDrop}
       >
         {loading ? (
-          <div className="mt-4 space-y-2">
+          <div className="space-y-2">
             <p className="text-gray-500 mt-2">
               <Loader2Icon className="animate-spin" />
             </p>
