@@ -121,7 +121,7 @@ export default function Home() {
           placeholder="Search in documents"
           defaultValue={keyword}
           onChange={(e) => debouncedSetKeyword(e.target.value)}
-          className="w-full px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2f2f2f] dark:text-white dark:placeholder:text-white"
+          className="w-full px-3 py-2 dark:border-none border border-gray-300 dark:border-[#ddd] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2f2f2f] dark:text-white dark:placeholder:text-white"
         />
         {keyword.trim() && (
           <div className="text-sm text-gray-600 dark:text-white">
@@ -155,7 +155,7 @@ export default function Home() {
                     style={{
                       ...style,
                     }}
-                    className="p-4 rounded-lg bg-white flex flex-col dark:bg-[#2f2f2f] shadow-lg "
+                    className="p-4 border rounded-lg bg-white flex flex-col dark:bg-[#2f2f2f] shadow-lg "
                   >
                     <h3 className="font-medium text-gray-900 mb-4 dark:text-white">
                       {file.name}
